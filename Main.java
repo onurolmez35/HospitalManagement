@@ -15,17 +15,25 @@ Command pattern: The different procedures (VirtualAngiography, MRI, HemaBloodTes
 
 // Abstract class for hospital staff
 abstract class HospitalStaff {
-    protected String name;
+    private String name;
 
     public HospitalStaff(String name) {
         this.name = name;
     }
 
-    public abstract void performDailyTasks();
+    public void performDailyTasks() {
+        measureBloodPressure();
+        performMedicalTests();
+    }
+
+    public abstract void measureBloodPressure();
+
+    public abstract void performMedicalTests();
 
     public abstract void notifyDangerousBP(Patient patient);
 }
 
+// Physician class
 // Physician class
 class Physician extends HospitalStaff {
     private List<Patient> patients;
@@ -39,8 +47,17 @@ class Physician extends HospitalStaff {
         patients.add(patient);
     }
 
+    public List<Patient> getPatients() {
+        return patients;
+    }
+
     @Override
-    public void performDailyTasks() {
+    public void measureBloodPressure() {
+        // Physician doesn't measure blood pressure
+    }
+
+    @Override
+    public void performMedicalTests() {
         for (Patient patient : patients) {
             if (patient.getType() == PatientType.CARDIOLOGICAL) {
                 RadiologyDepartment radiology = RadiologyDepartment.getInstance();
@@ -56,10 +73,12 @@ class Physician extends HospitalStaff {
         }
     }
 
+
     @Override
     public void notifyDangerousBP(Patient patient) {
-
+        System.out.println("Dangerous blood pressure level detected for patient " + patient.getName());
     }
+
 }
 
 // Nurse class
@@ -71,15 +90,12 @@ class Nurse extends HospitalStaff {
         this.physician = physician;
     }
 
-    public void notifyDangerousBP(Patient patient) {
-        System.out.println("Dangerous blood pressure level detected for patient " + patient.getName());
-        measureBloodPressure(patient);
-    }
-
-    public void measureBloodPressure(Patient patient) {
-        // Code to measure blood pressure
-        if (isDangerousBloodPressure(patient)) {
-            physician.notifyDangerousBP(patient);
+    public void measureBloodPressure() {
+        for (Patient patient : physician.getPatients()) {
+            // Code to measure blood pressure
+            if (isDangerousBloodPressure(patient)) {
+                physician.notifyDangerousBP(patient);
+            }
         }
     }
 
@@ -89,10 +105,16 @@ class Nurse extends HospitalStaff {
     }
 
     @Override
-    public void performDailyTasks() {
-        // Nurse doesn't have any daily tasks
+    public void performMedicalTests() {
+        // Nurse doesn't perform medical tests
+    }
+
+    @Override
+    public void notifyDangerousBP(Patient patient) {
+        // Nurse doesn't notify dangerous blood pressure
     }
 }
+
 
 // Patient class
 class Patient {
