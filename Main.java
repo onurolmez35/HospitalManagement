@@ -14,6 +14,9 @@ Command pattern: The different procedures (VirtualAngiography, MRI, HemaBloodTes
 
 
 // Abstract class for hospital staff
+import java.util.ArrayList;
+import java.util.List;
+
 abstract class HospitalStaff {
     private String name;
 
@@ -32,7 +35,6 @@ abstract class HospitalStaff {
 
     public abstract void notifyDangerousBP(Patient patient);
 }
-
 // Physician class
 // Physician class
 class Physician extends HospitalStaff {
@@ -58,6 +60,8 @@ class Physician extends HospitalStaff {
 
     @Override
     public void performMedicalTests() {
+        /*
+
         for (Patient patient : patients) {
             if (patient.getType() == PatientType.CARDIOLOGICAL) {
                 RadiologyDepartment radiology = RadiologyDepartment.getInstance();
@@ -71,8 +75,8 @@ class Physician extends HospitalStaff {
                 lab.performGastroBloodTest(patient);
             }
         }
+     */
     }
-
 
     @Override
     public void notifyDangerousBP(Patient patient) {
@@ -114,9 +118,6 @@ class Nurse extends HospitalStaff {
         // Nurse doesn't notify dangerous blood pressure
     }
 }
-
-
-// Patient class
 class Patient {
     private String name;
     private PatientType type;
@@ -124,6 +125,10 @@ class Patient {
     public Patient(String name, PatientType type) {
         this.name = name;
         this.type = type;
+    }
+
+    public String toString() {
+        return "Patient: " + name + ", Type: " + type;
     }
 
     public String getName() {
@@ -140,69 +145,118 @@ enum PatientType {
     GASTROENTEROLOGICAL
 }
 
-// Radiology department singleton class
-class RadiologyDepartment {
-    private static RadiologyDepartment instance = null;
+// Product interface
 
-    private RadiologyDepartment() {
-    }
+interface MedicalProcedure {
+    void perform();
+}
 
-    public static RadiologyDepartment getInstance() {
-        if (instance == null) {
-            instance = new RadiologyDepartment();
-        }
-        return instance;
-    }
-
-    public void performVirtualAngiography(Patient patient) {
-        // Code to perform virtual angiography
-        System.out.println("Virtual angiography performed for patient " + patient.getName());
-    }
-
-    public void performMRI(Patient patient) {
-        // Code to perform MRI
-        System.out.println("MRI performed for patient " + patient.getName());
+// ConcreteProduct classes
+class VirtualAngiography implements MedicalProcedure {
+    public void perform() {
+        System.out.println("Performing virtual angiography");
     }
 }
 
-// Lab department singleton class
-class LabDepartment {
-    private static LabDepartment instance = null;
-
-    private LabDepartment() {
-    }
-
-    public static LabDepartment getInstance() {
-        if (instance == null) {
-            instance = new LabDepartment();
-        }
-        return instance;
-    }
-
-    public void performHemaBloodTest(Patient patient) {
-        // Code to perform hematology blood test
-        System.out.println("Hema blood test performed for patient " + patient.getName());
-    }
-
-    public void performGastroBloodTest(Patient patient) {
-        // Code to perform gastroenterology blood test
-        System.out.println("Gastro blood test performed for patient " + patient.getName());
+class HemaBloodTest implements MedicalProcedure {
+    public void perform() {
+        System.out.println("Performing hematology blood test");
     }
 }
 
-// Main class
+class MRI implements MedicalProcedure {
+    public void perform() {
+        System.out.println("Performing MRI");
+    }
+}
+
+class GastroBloodTest implements MedicalProcedure {
+    public void perform() {
+        System.out.println("Performing gastroenterology blood test");
+    }
+}
+
+// Creator interface
+interface MedicalProcedureFactory {
+    MedicalProcedure createMedicalProcedure();
+}
+
+// ConcreteCreator classes
+class CardiologyProcedureFactory implements MedicalProcedureFactory {
+    public MedicalProcedure createMedicalProcedure() {
+        return new VirtualAngiography();
+    }
+}
+
+class GastroenterologyProcedureFactory implements MedicalProcedureFactory {
+    public MedicalProcedure createMedicalProcedure() {
+        return new MRI();
+    }
+}
+
+// Abstract Factory interface
+interface DepartmentFactory {
+    MedicalProcedureFactory createProcedureFactory();
+}
+
+// Concrete Factory classes
+class LabDepartmentFactory implements DepartmentFactory {
+    public MedicalProcedureFactory createProcedureFactory() {
+        return new HemaBloodTestFactory();
+    }
+}
+
+class RadiologyDepartmentFactory implements DepartmentFactory {
+    public MedicalProcedureFactory createProcedureFactory() {
+        return new VirtualAngiographyFactory();
+    }
+}
+
+// Concrete Product Factory classes
+class HemaBloodTestFactory implements MedicalProcedureFactory {
+    public MedicalProcedure createMedicalProcedure() {
+        return new HemaBloodTest();
+    }
+}
+
+class VirtualAngiographyFactory implements MedicalProcedureFactory {
+    public MedicalProcedure createMedicalProcedure() {
+        return new VirtualAngiography();
+    }
+}
+
+// Client class
 public class Main {
-    public static void main(String[] args) {
-        // Create physician and patients
-        Physician physician = new Physician("Dr. Smith");
-        Patient patient1 = new Patient("John Doe", PatientType.CARDIOLOGICAL);
-        Patient patient2 = new Patient("Jane Smith", PatientType.GASTROENTEROLOGICAL);
-        physician.addPatient(patient1);
-        physician.addPatient(patient2);
+    private DepartmentFactory cardiologyDepartmentFactory;
+    private DepartmentFactory gastroenterologyDepartmentFactory;
 
-        // Create nurse and assign to physician
-        Nurse nurse = new Nurse("Nurse Johnson", physician);
-        physician.performDailyTasks();
+    public Main() {
+        this.cardiologyDepartmentFactory = new RadiologyDepartmentFactory();
+        this.gastroenterologyDepartmentFactory = new LabDepartmentFactory();
+    }
+
+    public void performConsultation() {
+        // Cardiology patients
+        Patient cardiologyPatient = new Patient("John Doe",PatientType.CARDIOLOGICAL);
+        MedicalProcedure virtualAngiography = cardiologyDepartmentFactory.createProcedureFactory().createMedicalProcedure();
+        MedicalProcedure hemaBloodTest = new LabDepartmentFactory().createProcedureFactory().createMedicalProcedure();
+        System.out.println("Consultation for cardiology patients:");
+        System.out.println(cardiologyPatient);
+        virtualAngiography.perform();
+        hemaBloodTest.perform();
+
+        // Gastroenterology patients
+        Patient gastroenterologyPatient = new Patient("Jane Doe",PatientType.GASTROENTEROLOGICAL);
+        MedicalProcedure mri = gastroenterologyDepartmentFactory.createProcedureFactory().createMedicalProcedure();
+        MedicalProcedure gastroBloodTest = new GastroenterologyProcedureFactory().createMedicalProcedure();
+        System.out.println("Consultation for gastroenterology patients:");
+        System.out.println(gastroenterologyPatient);
+        mri.perform();
+        gastroBloodTest.perform();
+    }
+
+    public static void main(String[] args) {
+        Main hospital = new Main();
+        hospital.performConsultation();
     }
 }
-
