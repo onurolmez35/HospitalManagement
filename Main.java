@@ -1,15 +1,16 @@
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 
 /*
- Observer pattern: The Device class is an observable object that notifies its observers (in this case, the Nurse and Physician classes) when the blood pressure of a patient becomes dangerously high.
-Factory pattern: The Patient class is a factory for creating patients with different types (CARDIOLOGICAL and GASTROENTEROLOGICAL).
-DEGISECEK--Strategy pattern: The different procedures (VirtualAngiography, MRI, HemaBloodTest, and GastroBloodTest) are implemented as strategies, which allows the Physician to choose the appropriate procedure depending on the patient's type.
-Singleton pattern: The RadiologyDepartment and LabDepartment classes are singletons, meaning that there can only be one instance of each class.
+Nurse, Physician                    --Observer pattern: The Device class is an observable object that notifies its observers (in this case, the Nurse and Physician classes) when the blood pressure of a patient becomes dangerously high.
+Patient                             --Factory pattern: The Patient class is a factory for creating patients with different types (CARDIOLOGICAL and GASTROENTEROLOGICAL).
+Physician                           --Template pattern: The different procedures (VirtualAngiography, MRI, HemaBloodTest, and GastroBloodTest) are implemented as strategies, which allows the Physician to choose the appropriate procedure depending on the patient's type.
+RadiologyDepartment, LabDepartment  --Singleton pattern: The RadiologyDepartment and LabDepartment classes are singletons, meaning that there can only be one instance of each class.
 Command pattern: The different procedures (VirtualAngiography, MRI, HemaBloodTest, and GastroBloodTest) could be implemented as command objects, which would allow the Physician to easily keep track of the procedures that have been ordered for each patient. However, this pattern is not implemented in the code provided.
-
 */
 
 
@@ -37,7 +38,7 @@ abstract class HospitalStaff {
 }
 // Physician class
 // Physician class
-class Physician extends HospitalStaff {
+class Physician extends HospitalStaff implements Iterable<Patient> {
     private List<Patient> patients;
 
     public Physician(String name) {
@@ -54,6 +55,11 @@ class Physician extends HospitalStaff {
     }
 
     @Override
+    public Iterator<Patient> iterator() {
+        return new PhysicianIterator(patients);
+    }
+
+    @Override
     public void measureBloodPressure() {
         // Physician doesn't measure blood pressure
     }
@@ -62,7 +68,7 @@ class Physician extends HospitalStaff {
     public void performMedicalTests() {
         /*
 
-        for (Patient patient : patients) {
+        for (Patient patient : this) {
             if (patient.getType() == PatientType.CARDIOLOGICAL) {
                 RadiologyDepartment radiology = RadiologyDepartment.getInstance();
                 radiology.performVirtualAngiography(patient);
@@ -83,6 +89,28 @@ class Physician extends HospitalStaff {
         System.out.println("Dangerous blood pressure level detected for patient " + patient.getName());
     }
 
+    private static class PhysicianIterator implements Iterator<Patient> {
+        private List<Patient> patients;
+        private int index;
+
+        public PhysicianIterator(List<Patient> patients) {
+            this.patients = patients;
+            this.index = 0;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return index < patients.size();
+        }
+
+        @Override
+        public Patient next() {
+            if (!hasNext()) {
+                throw new NoSuchElementException();
+            }
+            return patients.get(index++);
+        }
+    }
 }
 
 // Nurse class
